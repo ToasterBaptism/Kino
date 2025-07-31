@@ -1,0 +1,113 @@
+<resources>
+    <string name="app_name">Kino</string>
+    
+    <!-- Main Screen -->
+    <string name="search_videos">Search videos...</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort_date_newest">Date (Newest first)</string>
+    <string name="sort_size_largest">Size (Largest first)</string>
+    <string name="sort_name_az">Name (A-Z)</string>
+    <string name="no_videos_found">No videos found</string>
+    <string name="record_new_video">Record New Video</string>
+    
+    <!-- Recording -->
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="pause_recording">Pause Recording</string>
+    <string name="resume_recording">Resume Recording</string>
+    <string name="save_replay">Save Replay</string>
+    <string name="recording_notification_title">Screen Recording</string>
+    <string name="recording_notification_text">Recording in progress...</string>
+    <string name="recording_paused">Recording paused</string>
+    <string name="instant_replay_active">Instant Replay Active</string>
+    <string name="timed_recording_active">Timed Recording: %s remaining</string>
+    
+    <!-- Recording Modes -->
+    <string name="standard_mode">Standard Mode</string>
+    <string name="instant_replay_mode">Instant Replay Mode</string>
+    <string name="timed_recording_mode">Timed Recording Mode</string>
+    
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="video_settings">Video Settings</string>
+    <string name="audio_settings">Audio Settings</string>
+    <string name="general_settings">General Settings</string>
+    
+    <!-- Video Settings -->
+    <string name="frame_rate">Frame Rate</string>
+    <string name="resolution">Resolution</string>
+    <string name="bitrate">Bitrate</string>
+    <string name="show_touches">Show Screen Touches</string>
+    <string name="fps_24">24 FPS</string>
+    <string name="fps_30">30 FPS</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_90">90 FPS (Hardware dependent)</string>
+    
+    <!-- Audio Settings -->
+    <string name="audio_source">Audio Source</string>
+    <string name="audio_mute">Mute</string>
+    <string name="audio_microphone">Microphone</string>
+    <string name="audio_internal">Internal Audio</string>
+    <string name="internal_audio_unsupported">Internal audio recording is not supported on this device</string>
+    
+    <!-- General Settings -->
+    <string name="reset_to_default">Reset to Default</string>
+    <string name="reset_confirmation_title">Reset Settings</string>
+    <string name="reset_confirmation_message">Are you sure you want to reset all settings to their default values?</string>
+    <string name="reset">Reset</string>
+    <string name="cancel">Cancel</string>
+    
+    <!-- Editor -->
+    <string name="edit_video">Edit Video</string>
+    <string name="trim">Trim</string>
+    <string name="crop">Crop</string>
+    <string name="add_text">Add Text</string>
+    <string name="export">Export</string>
+    <string name="exporting_video">Exporting Video...</string>
+    <string name="export_progress">Export Progress: %d%%</string>
+    
+    <!-- Crop Presets -->
+    <string name="aspect_ratio_16_9">16:9</string>
+    <string name="aspect_ratio_1_1">1:1</string>
+    <string name="aspect_ratio_4_5">4:5</string>
+    <string name="aspect_ratio_custom">Custom</string>
+    
+    <!-- Text Watermark -->
+    <string name="watermark_text">Watermark Text</string>
+    <string name="text_size">Text Size</string>
+    <string name="text_color">Text Color</string>
+    <string name="text_position">Text Position</string>
+    <string name="position_top_left">Top Left</string>
+    <string name="position_top_right">Top Right</string>
+    <string name="position_bottom_left">Bottom Left</string>
+    <string name="position_bottom_right">Bottom Right</string>
+    
+    <!-- Permissions -->
+    <string name="permission_required">Permission Required</string>
+    <string name="media_projection_permission">Screen recording permission is required to record your screen.</string>
+    <string name="audio_permission">Microphone permission is required to record audio.</string>
+    <string name="notification_permission">Notification permission is required to show recording status.</string>
+    <string name="overlay_permission">Overlay permission is required to show floating controls.</string>
+    <string name="grant_permission">Grant Permission</string>
+    
+    <!-- Onboarding -->
+    <string name="welcome_title">Welcome to Kino</string>
+    <string name="welcome_subtitle">Professional screen recording and editing</string>
+    <string name="onboarding_permissions_title">Permissions Required</string>
+    <string name="onboarding_permissions_subtitle">We need a few permissions to provide the best recording experience</string>
+    <string name="onboarding_features_title">Powerful Features</string>
+    <string name="onboarding_features_subtitle">Record, edit, and share your screen recordings with ease</string>
+    <string name="get_started">Get Started</string>
+    <string name="next">Next</string>
+    <string name="skip">Skip</string>
+    
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="delete">Delete</string>
+    <string name="share">Share</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="retry">Retry</string>
+</resources>
