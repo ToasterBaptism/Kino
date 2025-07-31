@@ -80,20 +80,42 @@ class RecordingService : Service() {
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand called with action: ${intent?.action}")
+        
         when (intent?.action) {
             ACTION_START_RECORDING -> {
                 val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, -1)
                 val data = intent.getParcelableExtra<Intent>(EXTRA_DATA)
                 val settings = intent.getSerializableExtra(EXTRA_SETTINGS) as? RecordingSettings
                 
+                Log.d(TAG, "Start recording - resultCode: $resultCode, data: $data, settings: $settings")
+                
                 if (resultCode != -1 && data != null && settings != null) {
                     startRecording(resultCode, data, settings)
+                } else {
+                    Log.e(TAG, "Invalid parameters for start recording")
+                    stopSelf()
                 }
             }
-            ACTION_STOP_RECORDING -> stopRecording()
-            ACTION_PAUSE_RECORDING -> pauseRecording()
-            ACTION_RESUME_RECORDING -> resumeRecording()
-            ACTION_SAVE_REPLAY -> saveInstantReplay()
+            ACTION_STOP_RECORDING -> {
+                Log.d(TAG, "Stop recording action")
+                stopRecording()
+            }
+            ACTION_PAUSE_RECORDING -> {
+                Log.d(TAG, "Pause recording action")
+                pauseRecording()
+            }
+            ACTION_RESUME_RECORDING -> {
+                Log.d(TAG, "Resume recording action")
+                resumeRecording()
+            }
+            ACTION_SAVE_REPLAY -> {
+                Log.d(TAG, "Save replay action")
+                saveInstantReplay()
+            }
+            else -> {
+                Log.w(TAG, "Unknown action: ${intent?.action}")
+            }
         }
         
         return START_NOT_STICKY
@@ -117,7 +139,22 @@ class RecordingService : Service() {
             recordingStartTime = System.currentTimeMillis()
             
             Log.d(TAG, "Starting foreground service")
-            startForeground(NOTIFICATION_ID, createNotification())
+            try {
+                val notification = createNotification()
+                startForeground(NOTIFICATION_ID, notification)
+                Log.d(TAG, "Foreground service started successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start foreground service", e)
+                // Try with a simpler notification
+                try {
+                    val simpleNotification = createSimpleNotification()
+                    startForeground(NOTIFICATION_ID, simpleNotification)
+                    Log.d(TAG, "Started with simple notification")
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Failed to start with simple notification", e2)
+                    throw e2
+                }
+            }
             
             startTimer()
             
@@ -141,11 +178,20 @@ class RecordingService : Service() {
             val displayMetrics = DisplayMetrics()
             windowManager.defaultDisplay.getMetrics(displayMetrics)
             
-            val width = recordingSettings.resolution.width
-            val height = recordingSettings.resolution.height
+            val requestedWidth = recordingSettings.resolution.width
+            val requestedHeight = recordingSettings.resolution.height
             val density = displayMetrics.densityDpi
             
-            Log.d(TAG, "Recording resolution: ${width}x${height}, density: $density")
+            // Use device resolution if it's smaller than requested resolution
+            val deviceWidth = displayMetrics.widthPixels
+            val deviceHeight = displayMetrics.heightPixels
+            
+            val width = minOf(requestedWidth, deviceWidth)
+            val height = minOf(requestedHeight, deviceHeight)
+            
+            Log.d(TAG, "Device resolution: ${deviceWidth}x${deviceHeight}")
+            Log.d(TAG, "Requested resolution: ${requestedWidth}x${requestedHeight}")
+            Log.d(TAG, "Using resolution: ${width}x${height}, density: $density")
             
             // Create output file
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
@@ -199,16 +245,37 @@ class RecordingService : Service() {
                         Log.d(TAG, "Audio encoder set")
                     }
                     
-                    setVideoSize(width, height)
-                    setVideoFrameRate(recordingSettings.frameRate)
-                    setVideoEncodingBitRate(recordingSettings.bitrate)
-                    Log.d(TAG, "Video parameters set: ${width}x${height}, ${recordingSettings.frameRate}fps, ${recordingSettings.bitrate}bps")
+                    // Validate and set video parameters
+                    val validWidth = if (width % 2 == 0) width else width - 1
+                    val validHeight = if (height % 2 == 0) height else height - 1
                     
-                    setOutputFile(outputFile?.absolutePath)
-                    Log.d(TAG, "Output file set: ${outputFile?.absolutePath}")
+                    setVideoSize(validWidth, validHeight)
+                    Log.d(TAG, "Video size set: ${validWidth}x${validHeight} (adjusted from ${width}x${height})")
+                    
+                    setVideoFrameRate(recordingSettings.frameRate)
+                    Log.d(TAG, "Frame rate set: ${recordingSettings.frameRate}")
+                    
+                    setVideoEncodingBitRate(recordingSettings.bitrate)
+                    Log.d(TAG, "Bitrate set: ${recordingSettings.bitrate}")
+                    
+                    val outputPath = outputFile?.absolutePath
+                    if (outputPath == null) {
+                        throw IllegalStateException("Output file path is null")
+                    }
+                    
+                    setOutputFile(outputPath)
+                    Log.d(TAG, "Output file set: $outputPath")
+                    
+                    // Ensure parent directory exists
+                    outputFile?.parentFile?.let { parentDir ->
+                        if (!parentDir.exists()) {
+                            parentDir.mkdirs()
+                            Log.d(TAG, "Created parent directory: ${parentDir.absolutePath}")
+                        }
+                    }
                     
                     prepare()
-                    Log.d(TAG, "MediaRecorder prepared")
+                    Log.d(TAG, "MediaRecorder prepared successfully")
                 } catch (e: Exception) {
                     Log.e(TAG, "Error configuring MediaRecorder", e)
                     throw e
@@ -221,8 +288,13 @@ class RecordingService : Service() {
             createVirtualDisplay(width, height, density)
             Log.d(TAG, "Virtual display created")
             
-            mediaRecorder?.start()
-            Log.d(TAG, "MediaRecorder started")
+            try {
+                mediaRecorder?.start()
+                Log.d(TAG, "MediaRecorder started successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start MediaRecorder", e)
+                throw e
+            }
             
         } catch (e: Exception) {
             Log.e(TAG, "Error in setupStandardRecording", e)
@@ -401,6 +473,15 @@ class RecordingService : Service() {
                 if (_recordingState.value == RecordingState.RECORDING) getString(R.string.pause_recording) else getString(R.string.resume_recording),
                 pauseResumePendingIntent
             )
+            .build()
+    }
+    
+    private fun createSimpleNotification(): Notification {
+        return NotificationCompat.Builder(this, KinoApplication.RECORDING_CHANNEL_ID)
+            .setContentTitle("Kino Recording")
+            .setContentText("Screen recording in progress")
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setOngoing(true)
             .build()
     }
     
