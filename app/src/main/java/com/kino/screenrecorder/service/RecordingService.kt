@@ -122,48 +122,96 @@ class RecordingService : Service() {
     }
     
     private fun startRecording(resultCode: Int, data: Intent, settings: RecordingSettings) {
-        if (_recordingState.value != RecordingState.IDLE) return
+        Log.d(TAG, "=== START RECORDING CALLED ===")
+        Log.d(TAG, "Current state: ${_recordingState.value}")
+        Log.d(TAG, "ResultCode: $resultCode")
+        Log.d(TAG, "Settings: $settings")
+        
+        if (_recordingState.value != RecordingState.IDLE) {
+            Log.w(TAG, "Recording already in progress, ignoring")
+            return
+        }
         
         recordingSettings = settings
         
         try {
-            Log.d(TAG, "Starting recording with settings: $settings")
+            Log.d(TAG, "Step 1: Starting recording with settings: $settings")
             
+            Log.d(TAG, "Step 2: Setting up MediaProjection")
             setupMediaProjection(resultCode, data)
             Log.d(TAG, "MediaProjection setup complete")
             
+            Log.d(TAG, "Step 3: Setting up recording")
             setupRecording()
             Log.d(TAG, "Recording setup complete")
             
+            Log.d(TAG, "Step 4: Setting state to RECORDING")
             _recordingState.value = RecordingState.RECORDING
             recordingStartTime = System.currentTimeMillis()
             
-            Log.d(TAG, "Starting foreground service")
-            try {
-                val notification = createNotification()
-                startForeground(NOTIFICATION_ID, notification)
-                Log.d(TAG, "Foreground service started successfully")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start foreground service", e)
-                // Try with a simpler notification
-                try {
-                    val simpleNotification = createSimpleNotification()
-                    startForeground(NOTIFICATION_ID, simpleNotification)
-                    Log.d(TAG, "Started with simple notification")
-                } catch (e2: Exception) {
-                    Log.e(TAG, "Failed to start with simple notification", e2)
-                    throw e2
-                }
-            }
+            Log.d(TAG, "Step 5: Starting foreground service")
+            startForegroundServiceSafely()
             
+            Log.d(TAG, "Step 6: Starting timer")
             startTimer()
             
-            Log.d(TAG, "Recording started successfully")
+            Log.d(TAG, "=== RECORDING STARTED SUCCESSFULLY ===")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to start recording", e)
-            // Send error back to UI
+            Log.e(TAG, "=== RECORDING START FAILED ===", e)
+            Log.e(TAG, "Exception type: ${e.javaClass.simpleName}")
+            Log.e(TAG, "Exception message: ${e.message}")
+            Log.e(TAG, "Stack trace:")
+            e.printStackTrace()
+            
+            // Clean up resources
+            cleanupRecording()
+            
             _recordingState.value = RecordingState.IDLE
             stopSelf()
+        }
+    }
+    
+    private fun startForegroundServiceSafely() {
+        try {
+            Log.d(TAG, "Attempting to create notification")
+            val notification = createNotification()
+            Log.d(TAG, "Notification created, starting foreground")
+            startForeground(NOTIFICATION_ID, notification)
+            Log.d(TAG, "Foreground service started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start foreground service with main notification", e)
+            try {
+                Log.d(TAG, "Trying simple notification")
+                val simpleNotification = createSimpleNotification()
+                startForeground(NOTIFICATION_ID, simpleNotification)
+                Log.d(TAG, "Started with simple notification")
+            } catch (e2: Exception) {
+                Log.e(TAG, "Failed to start with simple notification", e2)
+                try {
+                    Log.d(TAG, "Trying minimal notification")
+                    val minimalNotification = createMinimalNotification()
+                    startForeground(NOTIFICATION_ID, minimalNotification)
+                    Log.d(TAG, "Started with minimal notification")
+                } catch (e3: Exception) {
+                    Log.e(TAG, "All notification attempts failed", e3)
+                    throw e3
+                }
+            }
+        }
+    }
+    
+    private fun cleanupRecording() {
+        try {
+            Log.d(TAG, "Cleaning up recording resources")
+            mediaRecorder?.release()
+            mediaRecorder = null
+            virtualDisplay?.release()
+            virtualDisplay = null
+            mediaProjection?.stop()
+            mediaProjection = null
+            Log.d(TAG, "Cleanup completed")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during cleanup", e)
         }
     }
     
@@ -173,7 +221,9 @@ class RecordingService : Service() {
     }
     
     private fun setupRecording() {
+        Log.d(TAG, "=== SETUP RECORDING START ===")
         try {
+            Log.d(TAG, "Getting window manager")
             val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             val displayMetrics = DisplayMetrics()
             windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -481,6 +531,14 @@ class RecordingService : Service() {
             .setContentTitle("Kino Recording")
             .setContentText("Screen recording in progress")
             .setSmallIcon(android.R.drawable.ic_media_play)
+            .setOngoing(true)
+            .build()
+    }
+    
+    private fun createMinimalNotification(): Notification {
+        return NotificationCompat.Builder(this, KinoApplication.RECORDING_CHANNEL_ID)
+            .setContentTitle("Recording")
+            .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setOngoing(true)
             .build()
     }
